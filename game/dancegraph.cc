@@ -469,6 +469,14 @@ void DanceGraph::drawNote(DanceNote& note, double time) {
 	float x = panel2x(arrow_i);
 	float yBeg = time2y(tBeg*m_currentSpeedMod);
 	float yEnd = time2y(tEnd*m_currentSpeedMod);
+	Color notecolor;
+	if(note.note.phase != 0 || note.note.phase!= 0.25 || note.note.phase!= 0.5 || note.note.phase!= 0.75) { //quarter notes need to stay red
+		if(note.note.phase == 0.125 || note.note.phase == 0.375 || note.note.phase == 0.625 || note.note.phase == 0.875 ||
+				note.note.phase == 1.125 || note.note.phase == 1.375 || note.note.phase == 1.625 || note.note.phase == 1.875) //8th note: BLUE
+			notecolor = Color(0.2,0.2,1);
+			//TODO add yellow for 24th notes, green for 16th notes and other colors for other notes.
+		}
+
 
 	// Did we hit it?
 	if (note.isHit && (note.releaseTime > 0.0 || std::abs(tEnd) < maxTolerance) && note.hitAnim.getTarget() == 0.0) {
@@ -496,6 +504,7 @@ void DanceGraph::drawNote(DanceNote& note, double time) {
 				glmath::mat4 pos = translate(glmath::vec3(x, yBeg, 0.0));
 				glmath::mat4 rot = rotate(arrowRotations[arrow_i], glmath::vec3(0,0,-1));
 				Transform noteTrans(pos * rot);
+				ColorTrans c(notecolor);
 				m_arrow_obj.draw();
 			}
 			// Tail
@@ -526,6 +535,7 @@ void DanceGraph::drawNote(DanceNote& note, double time) {
 				glmath::mat4 pos = translate(glmath::vec3(x, yBeg, 0.0));
 				glmath::mat4 rot = rotate(arrowRotations[arrow_i], glmath::vec3(0,0,-1));
 				Transform noteTrans(pos * rot);
+				ColorTrans c(notecolor);
 				m_arrow_obj.draw();
 			}
 		}
@@ -550,6 +560,7 @@ void DanceGraph::drawNote(DanceNote& note, double time) {
 			m_popupText->draw();
 		}
 	}
+	std::cout << note.note.phase << std::endl;
 }
 
 /// Draw popups and other info texts
