@@ -474,7 +474,10 @@ void DanceGraph::drawNote(DanceNote& note, double time) {
 		if(note.note.phase == 0.125 || note.note.phase == 0.375 || note.note.phase == 0.625 || note.note.phase == 0.875 ||
 				note.note.phase == 1.125 || note.note.phase == 1.375 || note.note.phase == 1.625 || note.note.phase == 1.875) //8th note: BLUE
 			notecolor = Color(0.2,0.2,1);
-			//TODO add yellow for 24th notes, green for 16th notes and other colors for other notes.
+		else if (note.note.phase == 0.333333 || note.note.phase == 0.416667 || note.note.phase == 0.0833333 || note.note.phase == 0.166667) //12th notes - GREEN TODO: still doesn't work the way I want it
+			notecolor = Color(0,1,0);
+		else if (note.note.phase == 0.8125 || note.note.phase == 0.1875 || note.note.phase == 0.3125 || note.note.phase == 0.4375 || note.note.phase == 0.5625 || note.note.phase == 0.0625 || note.note.phase == 0.6875 || note.note.phase == 0.9375) //16th notes YELLOW
+			notecolor = Color(1,1,0);
 		}
 
 
