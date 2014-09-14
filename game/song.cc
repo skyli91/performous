@@ -49,9 +49,9 @@ void Song::dropNotes() {
 }
 
 void Song::collateUpdate() {
-	collateByTitle = collate(title + artist) + '\0' + filename.string();
+	collateByTitle = collate(title + artist) + '\0' + filenames[0].string();
 	collateByTitleOnly = collate(title);
-	collateByArtist = collate(artist + title) + '\0' + filename.string();
+	collateByArtist = collate(artist + title) + '\0' + filenames[0].string();
 	collateByArtistOnly = collate(artist);
 }
 

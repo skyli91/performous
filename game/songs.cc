@@ -74,16 +74,18 @@ void Songs::reload_internal(fs::path const& parent) {
 				s->randomIdx = rand(); //give it a random identifier
 				boost::mutex::scoped_lock l(m_mutex);
 				int AdditionalFileIndex = -1;
-				for(unsigned int i = 0; i< m_songs.size(); i++) {
-					if(s->filename.extension() != m_songs[i]->filename.extension() && s->filename.stem() == m_songs[i]->filename.stem() &&
-							s->title == m_songs[i]->title && s->artist == m_songs[i]->artist) {
-						std::clog << "songs/info: >>> Found additional song file: " << s->filename << " for: " << m_songs[i]->filename << std::endl;
-						AdditionalFileIndex = i;
+				for(unsigned int i = 0; i< m_songs.size(); i++) { //loop through existing songs to...
+					if(s->filenames[0].extension() != m_songs[i]->filenames[0].extension() && //check if the extension is different
+							s->filenames[0].stem() == m_songs[i]->filenames[0].stem() && //but the filename is the same
+							s->path == m_songs[i]->path && //and they are in the same folder
+							s->artist == m_songs[i]->artist && s->title == m_songs[i]->title) { //and the metadata is the same
+						std::clog << "songs/info: >>> Found additional song file: " << s->filenames[0] << " for: " << m_songs[i]->filenames[0] << std::endl;
+						AdditionalFileIndex = i; //tell to which song this should be added
 					}
 				}
-				if(AdditionalFileIndex > 0) { //TODO: add it to existing song
-					std::clog << "songs/info: >>> not yet implemented " << std::endl;
-					m_songs.push_back(s); // will make it appear double!!
+				if(AdditionalFileIndex > 0) { //this means we need to add it to an existing song
+					m_songs[AdditionalFileIndex]->filenames.push_back(s->filenames[0]);
+					m_songs[AdditionalFileIndex]->reload(false);
 				} else {
 					m_songs.push_back(s); //put it in the database
 				}

@@ -170,7 +170,7 @@ bool SongParser::txtParseNote(std::string line) {
 			else if (m_song.b0rked.empty()) { // Cannot fix, warn and skip
 				std::string msg = "Skipped overlapping notes.\n";
 				m_song.b0rked = msg;
-				std::clog << "songparser/notice: " + m_song.filename.string() + ": " + msg << std::endl;
+				std::clog << "songparser/notice: " + m_song.filenames[0].string() + ": " + msg << std::endl;
 				return true;
 			}
 		} else throw std::runtime_error("The first note has negative timestamp");

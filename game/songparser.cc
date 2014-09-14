@@ -55,43 +55,46 @@ SongParser::SongParser(Song& s) try:
 {
 	enum { NONE, TXT, XML, INI, SM } type = NONE;
 	// Read the file, determine the type and do some initial validation checks
-	{
-		fs::ifstream f(s.filename, std::ios::binary);
-		if (!f.is_open()) throw SongParserException(s, "Could not open song file", 0);
-		m_ss << f.rdbuf();
-		int size = m_ss.str().length();
-		if (size < 10 || size > 100000) throw SongParserException(s, "Does not look like a song file (wrong size)", 1, true);
-		// Convert m_ss; filename supplied for possible warning messages
-		convertToUTF8(m_ss, s.filename.string());
-
-		if (smCheck(m_ss.str())) type = SM;
-		else if (txtCheck(m_ss.str())) type = TXT;
-		else if (iniCheck(m_ss.str())) type = INI;
-		else if (xmlCheck(m_ss.str())) type = XML;
-		else throw SongParserException(s, "Does not look like a song file (wrong header)", 1, true);
-	}
+		for (fs::path filename : s.filenames) {
+			fs::ifstream f(filename, std::ios::binary);
+			if (!f.is_open()) throw SongParserException(s, "Could not open song file", 0);
+			f.seekg(0, std::ios::end);
+			size_t size = f.tellg();
+			if (size < 10 || size > 100000) throw SongParserException(s, "Does not look like a song file (wrong size)", 1, true);
+			f.seekg(0);
+			std::vector<char> data(size);
+			if (!f.read(&data[0], size)) throw SongParserException(s, "Unexpected I/O error", 0);
+			if (smCheck(data)) type = SM;
+			else if (txtCheck(data)) type = TXT;
+			else if (iniCheck(data)) type = INI;
+			else if (xmlCheck(data)) type = XML;
+			else throw SongParserException(s, "Does not look like a song file (wrong header)", 1, true);
+			m_ss.write(&data[0], size);
+	// Convert m_ss; filename supplied for possible warning messages
+	convertToUTF8(m_ss, filename.string());
 	// Header already parsed?
 	if (s.loadStatus == Song::HEADER) {
 		if (type == TXT) txtParse();
 		else if (type == INI) midParse();  // INI doesn't contain notes, parse those from MIDI
 		else if (type == XML) xmlParse();
 		else if (type == SM) smParse();
-		finalize(); // Do some adjusting to the notes
+		finalize();// Do some adjusting to the notes
 		s.loadStatus = Song::FULL;
 		return;
 	}
-	// Parse only header to speed up loading and conserve memory
-	if (type == TXT) txtParseHeader();
-	else if (type == INI) iniParseHeader();
-	else if (type == XML) xmlParseHeader();
-	else if (type == SM) { smParseHeader(); s.dropNotes(); } // Hack: drop notes here
-	// Default for preview position if none was specified in header
-	if (s.preview_start != s.preview_start) s.preview_start = (type == INI ? 5.0 : 30.0);  // 5 s for band mode, 30 s for others
+		// Parse only header to speed up loading and conserve memory
+		if (type == TXT) txtParseHeader();
+		else if (type == INI) iniParseHeader();
+		else if (type == XML) xmlParseHeader();
+		else if (type == SM) { smParseHeader(); s.dropNotes(); } // Hack: drop notes here
+		// Default for preview position if none was specified in header
+		if (s.preview_start != s.preview_start) s.preview_start = (type == INI ? 5.0 : 30.0);  // 5 s for band mode, 30 s for others
 
-	guessFiles();
-	if (!m_song.midifilename.empty()) midParseHeader();
+		guessFiles();
+		if (!m_song.midifilename.empty()) midParseHeader();
 
-	s.loadStatus = Song::HEADER;
+		s.loadStatus = Song::HEADER;
+	}
 } catch (SongParserException&) {
 	throw;
 } catch (std::runtime_error& e) {
@@ -155,7 +158,7 @@ void SongParser::guessFiles() {
 	m_song.music[TrackName::PREVIEW].clear();  // We don't currently support preview tracks (TODO: proper handling in audio.cc).
 
 	if (logFound.empty() && logMissing.empty()) return;
-	std::clog << "songparser/" << (logMissing.empty() ? "debug" : "notice") << ": " + m_song.filename.string() + ":\n";
+	std::clog << "songparser/" << (logMissing.empty() ? "debug" : "notice") << ": " + m_song.filenames[0].string() + ":\n";
 	if (!logMissing.empty()) std::clog << "  Not found:    " + logMissing + "\n";
 	if (!logFound.empty()) std::clog << "  Autodetected: " + logFound + "\n";
 	std::clog << std::flush;
@@ -223,7 +226,7 @@ void SongParser::finalize() {
 			for (auto itn = vocal.notes.begin(); itn != vocal.notes.end();) {
 				Note::Type type = itn->type;
 				if(type == Note::SLEEP && lastType == Note::SLEEP) {
-					std::clog << "songparser/info: " + m_song.filename.string() + ": Discarding empty sentence" << std::endl;
+					std::clog << "songparser/info: " + m_song.filenames[0].string() + ": Discarding empty sentence" << std::endl;
 					itn = vocal.notes.erase(itn);
 				} else {
 					++itn;

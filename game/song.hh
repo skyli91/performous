@@ -33,7 +33,10 @@ class Song: boost::noncopyable {
 	VocalTracks vocalTracks; ///< notes for the sing part
 	VocalTrack dummyVocal; ///< notes for the sing part
 	/// constructor
-	Song(fs::path const& path_, fs::path const& filename_): dummyVocal(TrackName::LEAD_VOCAL), path(path_), filename(filename_) { reload(false); }
+	Song(fs::path const& path_, fs::path const& filename_): dummyVocal(TrackName::LEAD_VOCAL), path(path_) {
+		filenames.push_back(filename_);
+		reload(false);
+	}
 	/// reload song
 	void reload(bool errorIgnore = true);
 	/// parse field
@@ -95,9 +98,9 @@ class Song: boost::noncopyable {
 	bool hasVocals() const { return !vocalTracks.empty(); }
 	bool hasDuet() const { return vocalTracks.size() > 1; }
 	bool hasControllers() const { return !danceTracks.empty() || !instrumentTracks.empty(); }
-	fs::path path; ///< path of songfile
-	fs::path filename; ///< name of songfile
-	fs::path midifilename; ///< name of midi file in FoF format
+	fs::path path; ///< paths of songfiles
+	std::vector<fs::path> filenames; ///< list of songfile names
+	fs::path midifilename; ///< name of midi file in FoF format (we only need one)
 	std::vector<std::string> category; ///< category of song
 	std::string genre; ///< genre
 	std::string edition; ///< license
@@ -147,7 +150,7 @@ static inline bool operator<(Song const& l, Song const& r) { return l.collateByA
 /// Thrown by SongParser when there is an error
 struct SongParserException: public std::runtime_error {
 	/// constructor
-	SongParserException(Song& s, std::string const& msg, unsigned int linenum, bool sil = false): runtime_error(msg), m_filename(s.filename), m_linenum(linenum), m_silent(sil) {
+	SongParserException(Song& s, std::string const& msg, unsigned int linenum, bool sil = false): runtime_error(msg), m_filename(s.filenames[0]), m_linenum(linenum), m_silent(sil) {
 		if (!sil) s.b0rked += msg + '\n';
 	}
 	~SongParserException() throw() {}
