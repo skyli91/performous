@@ -55,7 +55,10 @@ SongParser::SongParser(Song& s) try:
 {
 	enum { NONE, TXT, XML, INI, SM } type = NONE;
 	// Read the file, determine the type and do some initial validation checks
-		for (fs::path filename : s.filenames) {
+		for (unsigned int i = 0; i < s.filenames.size(); i++) {
+			m_ss.flush();
+			m_linenum = 0;
+			fs::path filename = s.filenames[i];
 			fs::ifstream f(filename, std::ios::binary);
 			if (!f.is_open()) throw SongParserException(s, "Could not open song file", 0);
 			f.seekg(0, std::ios::end);
@@ -79,14 +82,14 @@ SongParser::SongParser(Song& s) try:
 		else if (type == XML) xmlParse();
 		else if (type == SM) smParse();
 		finalize();// Do some adjusting to the notes
-		s.loadStatus = Song::FULL;
+		if(!i < s.filenames.size()) s.loadStatus = Song::FULL; //only give it full loadstatus when everything has been parsed correctly
 		return;
 	}
 		// Parse only header to speed up loading and conserve memory
 		if (type == TXT) txtParseHeader();
 		else if (type == INI) iniParseHeader();
 		else if (type == XML) xmlParseHeader();
-		else if (type == SM) { smParseHeader(); s.dropNotes(); } // Hack: drop notes here
+		else if (type == SM)  smParseHeader();
 		// Default for preview position if none was specified in header
 		if (s.preview_start != s.preview_start) s.preview_start = (type == INI ? 5.0 : 30.0);  // 5 s for band mode, 30 s for others
 
