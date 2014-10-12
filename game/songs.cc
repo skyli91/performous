@@ -84,10 +84,10 @@ void Songs::reload_internal(fs::path const& parent) {
 					}
 				}
 				if(AdditionalFileIndex > 0) { //this means we need to add it to an existing song
-					m_songs[AdditionalFileIndex]->filenames.push_back(s->filenames[0]);
+					m_songs[AdditionalFileIndex]->filenames.insert(m_songs[AdditionalFileIndex]->filenames.begin(), s->filenames[0]);
 					m_songs[AdditionalFileIndex]->reload(false);
 				} else {
-					m_songs.push_back(s); //put it in the database
+					m_songs. push_back(s); //put it in the database
 				}
 				m_dirty = true;
 			} catch (SongParserException& e) {
